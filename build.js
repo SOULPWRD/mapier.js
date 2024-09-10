@@ -47,7 +47,7 @@ function write_document(output_path) {
     return function (callback, app_code) {
         const document = create_html({
             app_code,
-            state: {}
+            state: JSON.stringify({})
         });
 
         writeFile(output_path, document, function (err) {
