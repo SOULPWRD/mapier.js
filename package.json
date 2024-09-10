@@ -7,12 +7,10 @@
         "email": "martin.pravda@gmail.com"
     },
     "dependencies": {
-        "bunyan": "^1.8.15",
         "ol": "^10.1.0"
     },
     "devDependencies": {
-        "@rollup/plugin-commonjs": "^26.0.1",
-        "@rollup/plugin-node-resolve": "^15.2.3",
+        "bunyan": "^1.8.15",
         "vite": "5.4.2"
     }
 }
