@@ -59,6 +59,6 @@ const map_ui = make_ui("ui-map", function (element) {
 });
 
 //demo import demo from "./demo.js";
-//demo demo(dom(map_ui()));
+//demo demo(map_ui());
 
 export default Object.freeze(map_ui);
