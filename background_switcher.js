@@ -22,28 +22,31 @@ const background_switcher = make_ui(
         }
 
         const background_layer = function ({
+            id,
             checked,
             title,
         }) {
             return dom("li", [
                 dom("input", {
-                    id: title,
+                    id,
                     checked,
                     name: "background",
                     onclick: update_map,
                     type: "radio"
                 }),
                 dom("label", {
-                    htmlFor: title
+                    htmlFor: id
                 }, title)
             ]);
         }
         
         const backgrounds = layers.map(function ({
+            id,
             title,
             checked
         }) {
             return background_layer({
+                id,
                 checked,
                 title
             });
@@ -67,10 +70,12 @@ const background_switcher = make_ui(
 //demo     title: "Background",
 //demo     layers: [
 //demo         {
+//demo             id: "osm",
 //demo             title: "OSM",
 //demo             checked: true
 //demo         },
-//demo         {
+//demo         {    
+//demo             id: "forest",
 //demo             title: "Forest map",
 //demo             checked: false
 //demo         }

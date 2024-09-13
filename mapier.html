@@ -21346,17 +21346,85 @@ const map_ui = make_ui("ui-map", function(element) {
   };
 });
 const map_ui$1 = Object.freeze(map_ui);
+const background_switcher = make_ui(
+  "background-switcher",
+  function(element, props) {
+    const {
+      title,
+      layers
+    } = props;
+    const shadow = element.attachShadow({ mode: "closed" });
+    function update_map() {
+    }
+    const background_layer = function({
+      id,
+      checked,
+      title: title2
+    }) {
+      return dom$1("li", [
+        dom$1("input", {
+          id,
+          checked,
+          name: "background",
+          onclick: update_map,
+          type: "radio"
+        }),
+        dom$1("label", {
+          htmlFor: id
+        }, title2)
+      ]);
+    };
+    const backgrounds = layers.map(function({
+      id,
+      title: title2,
+      checked
+    }) {
+      return background_layer({
+        id,
+        checked,
+        title: title2
+      });
+    });
+    const switcher = dom$1("div", [
+      dom$1("h2", title),
+      dom$1("ul", {
+        style: {
+          "list-style-type": "none"
+        }
+      }, backgrounds)
+    ]);
+    shadow.append(switcher);
+  }
+);
+const background_switcher$1 = Object.freeze(background_switcher);
 const app = make_ui("main-app", function(element) {
   function mount(target) {
     document.querySelector(target).append(element);
   }
-  element.append(map_ui$1());
+  element.append(
+    map_ui$1(),
+    background_switcher$1({
+      title: "Backgrounds",
+      layers: [
+        {
+          id: "osm",
+          title: "OSM",
+          checked: true
+        },
+        {
+          id: "forest",
+          title: "Forest map",
+          checked: false
+        }
+      ]
+    })
+  );
   element.mount = mount;
   return element;
 });
 app().mount("#root");
 </script>
-                <script type="application/json" data-app="store">[object Object]</script>
+                <script type="application/json" data-app="store">{}</script>
             </body>
         </html>
     
