@@ -21301,7 +21301,25 @@ function dom(tag, properties = {}, children = []) {
 }
 const dom$1 = Object.freeze(dom);
 const map_ui = make_ui("ui-map", function(element) {
-  let ol_map;
+  const ol_map = new Map({
+    controls: defaults$1({
+      attribution: false,
+      attributionOptions: false,
+      rotate: false,
+      rotateOptions: false,
+      zoom: false,
+      zoomOptions: false
+    }),
+    layers: [
+      new TileLayer({
+        source: new OSM()
+      })
+    ],
+    view: new View({
+      center: [0, 0],
+      zoom: 2
+    })
+  });
   const shadow = element.attachShadow({ mode: "closed" });
   const map_root = dom$1("div", {
     style: {
@@ -21310,42 +21328,81 @@ const map_ui = make_ui("ui-map", function(element) {
       height: "500px"
     }
   });
-  function mount_map() {
-    ol_map = new Map({
-      controls: defaults$1({
-        attribution: false,
-        attributionOptions: false,
-        rotate: false,
-        rotateOptions: false,
-        zoom: false,
-        zoomOptions: false
-      }),
-      layers: [
-        new TileLayer({
-          source: new OSM()
-        })
-      ],
-      target: map_root,
-      view: new View({
-        center: [0, 0],
-        zoom: 2
-      })
-    });
-    shadow.append(map_root);
+  function get_map() {
+    return ol_map;
   }
   function dispose_map() {
     ol_map.dispose();
   }
+  element.get_map = get_map;
+  shadow.append(map_root);
   return {
     connect() {
-      mount_map();
+      ol_map.setTarget(map_root);
     },
     disconnect() {
       dispose_map();
     }
   };
 });
-const map_ui$1 = Object.freeze(map_ui);
+const make_map_ui = Object.freeze(map_ui);
+const coordinates_ui = make_ui("map-coordinates", function(element, {
+  coords,
+  on_coords_update
+}) {
+  const shadow = element.attachShadow({ mode: "closed" });
+  const coords_element = dom$1("input", {
+    onchange: function on_change(event) {
+      event.preventDefault();
+      const value = event.target.value;
+      const [x, y] = value.split(",");
+      on_coords_update(x == null ? void 0 : x.trim(), y == null ? void 0 : y.trim());
+    },
+    type: "text"
+  });
+  function update_coordinates(x, y) {
+    coords.x = x;
+    coords.y = y;
+    coords_element.value = `${coords.x}, ${coords.y}`;
+  }
+  function clear_coordinates() {
+    coords_element.value = "";
+  }
+  shadow.append(coords_element);
+  element.update_coordinates = update_coordinates;
+  element.clear_coordinates = clear_coordinates;
+  return {
+    connect() {
+      update_coordinates(coords.x, coords.y);
+    },
+    disconnect() {
+      clear_coordinates();
+    }
+  };
+});
+const make_coordinates = Object.freeze(coordinates_ui);
+const make_bottom_pane = make_ui("map-bottom-pane", function(element, {
+  map
+}) {
+  const shadow = element.attachShadow({ mode: "closed" });
+  const view = map.getView();
+  const [x, y] = view.getCenter();
+  const coords_ui = make_coordinates({
+    coords: { x, y },
+    on_coords_update(x2, y2) {
+      view.setCenter([x2, y2]);
+    }
+  });
+  map.on("moveend", function on_move_end() {
+    const [x2, y2] = view.getCenter();
+    coords_ui.update_coordinates(x2, y2);
+  });
+  map.un("moveend", function remove_move_end() {
+    coords_ui.clear_coordinates();
+  });
+  shadow.append(coords_ui);
+});
+const make_bottom_pane$1 = Object.freeze(make_bottom_pane);
 const background_switcher = make_ui(
   "background-switcher",
   function(element, props) {
@@ -21401,30 +21458,35 @@ const app = make_ui("main-app", function(element) {
   function mount(target) {
     document.querySelector(target).append(element);
   }
+  const map_ui2 = make_map_ui();
+  const bottom_pane_ui = make_bottom_pane$1({
+    map: map_ui2.get_map()
+  });
   element.append(
-    map_ui$1(),
+    map_ui2,
     background_switcher$1({
-      title: "Backgrounds",
       layers: [
         {
+          checked: true,
           id: "osm",
-          title: "OSM",
-          checked: true
+          title: "OSM"
         },
         {
+          checked: false,
           id: "forest",
-          title: "Forest map",
-          checked: false
+          title: "Forest map"
         }
-      ]
-    })
+      ],
+      title: "Backgrounds"
+    }),
+    bottom_pane_ui
   );
   element.mount = mount;
   return element;
 });
 app().mount("#root");
 </script>
-                <script type="application/json" data-app="store">{}</script>
+                <script type="application/json" data-app="store">{"components":[{"id":"background_switcher","map_refs":["background_switcher_map_1","background_switcher_map_2"]},{"id":"map","map_refs":["main_map"]}],"controls":[{"id":"map_controls_1","attribution":false,"attributionOptions":false,"rotate":false,"rotateOptions":false,"zoom":false,"zoomOptions":false}],"layers":[{"id":"osm","source":{"type":"osm"},"type":"tile_layer"},{"id":"thunder_forest","source":{"type":"image_tile","url":"https://{a-c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=0e6fc415256d4fbb9b5166a718591d71"},"type":"tile_layer"}],"maps":[{"active_layer":"osm","active_view":"map","control_refs":["map_controls_1"],"id":"main_map","layer_refs":["osm","thunder_forest"],"view_refs":["map"]},{"active_layer":"osm","active_view":"map","control_refs":["map_controls_1"],"id":"background_switcher_map_1","layer_refs":["osm"],"view_refs":["map"]},{"active_view":"map","active_layer":"thunder_forest","control_refs":["map_controls_1"],"id":"background_switcher_map_2","layer_refs":["thunder_forest"],"view_refs":["map"]}],"views":[{"center":[0,0],"id":"map","zoom":2}]}</script>
             </body>
         </html>
     
