@@ -21,8 +21,7 @@ const coordinates_ui = make_ui("map-coordinates", function (element, {
             const [x, y] = value.split(",");
 
             on_coords_update(x?.trim(), y?.trim());
-        }
-    }, {
+        },
         type: "text"
     });
 
