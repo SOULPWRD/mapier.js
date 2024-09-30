@@ -8,7 +8,25 @@ import make_ui from "./ui.js";
 import dom from "./dom.js";
 
 const map_ui = make_ui("ui-map", function (element) {
-    let ol_map;
+    const ol_map = new Map({
+        controls: defaults({
+            attribution: false,
+            attributionOptions: false,
+            rotate: false,
+            rotateOptions: false,
+            zoom: false,
+            zoomOptions: false,
+        }),
+        layers: [
+            new Tile({
+                source: new OSM()
+            })
+        ],
+        view: new View({
+            center: [0, 0],
+            zoom: 2
+        })
+    });
 
     const shadow = element.attachShadow({mode: "closed"});
     const map_root = dom("div", {
@@ -18,39 +36,21 @@ const map_ui = make_ui("ui-map", function (element) {
             height: "500px"
         }
     });
-
-    function mount_map() {
-        ol_map = new Map({
-            controls: defaults({
-                attribution: false,
-                attributionOptions: false,
-                rotate: false,
-                rotateOptions: false,
-                zoom: false,
-                zoomOptions: false,
-            }),
-            layers: [
-                new Tile({
-                    source: new OSM()
-                })
-            ],
-            target: map_root,
-            view: new View({
-                center: [0, 0],
-                zoom: 2
-            })
-        });
-
-        shadow.append(map_root);
+    
+    function get_map() {
+        return ol_map;
     }
 
     function dispose_map() {
         ol_map.dispose();
     }
 
+    element.get_map = get_map;
+    shadow.append(map_root);
+
     return {
         connect() {
-            mount_map();
+            ol_map.setTarget(map_root);
         },
         disconnect() {
             dispose_map();
