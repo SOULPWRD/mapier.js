@@ -46,4 +46,8 @@ const app = make_ui("main-app", function (element) {
     return element;
 });
 
-app().mount("#root");
+
+//demo import demo from "./demo.js";
+//demo demo(app());
+
+export default Object.freeze(app);

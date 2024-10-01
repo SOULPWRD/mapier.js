@@ -80,6 +80,6 @@ function build_html(input, output, environment = "development") {
 }
 
 build_html(
-    entrify("./main.js"),
+    entrify("./mapier.js"),
     entrify("./mapier.html")
 );
