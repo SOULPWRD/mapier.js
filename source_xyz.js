@@ -47,7 +47,7 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
                 );
             });
 
-            (
+            return (
                 source.name === "Custom"
                 ? source_details.clear_details()
                 : source_details.update_details(source)
