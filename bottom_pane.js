@@ -22,17 +22,20 @@ const make_bottom_pane = make_ui("map-bottom-pane", function (element, {
         }
     });
 
-
-    map.on("moveend", function on_move_end() {
-        const [x, y] = view.getCenter();
+    function update_coords(event) {
+        const [x, y] = event.coordinate;
         coords_ui.update_coordinates(x, y);
-    });
+    }
 
-    map.un("moveend", function remove_move_end() {
-        coords_ui.clear_coordinates();
-    });
+    map.on("pointermove", update_coords);
 
     shadow.append(coords_ui);
+
+    return {
+        disconnect() {
+            map.un("pointermove", update_coords);
+        }
+    }
 });
 
 export default Object.freeze(make_bottom_pane);
