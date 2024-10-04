@@ -7,11 +7,17 @@ import make_ui from "./ui.js";
 import dom from "./dom.js";
 
 const make_details_xyz = make_ui("details-xyz", function (element, {
+    add_disabled = false,
+    delete_disabled = false,
     max_zoom_level = 0,
     min_zoom_level = 0,
     name = "",
     on_add_source,
+    on_delete_source,
+    on_name_change,
     on_save_source,
+    on_url_change,
+    save_disabled = false,
     url = ""
 }) {
     let name_input;
@@ -21,6 +27,7 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
     let detail_component;
     let add_button;
     let save_button;
+    let delete_button;
 
     const shadow = element.attachShadow({mode: "closed"});
 
@@ -55,12 +62,26 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
         max_zoom_input.value = 0;
     }
 
+    function disable_element(element) {
+        return function (value) {
+            element.disabled = value;
+        };
+    }
+
     name_input = dom("input", {
+        oninput: function (event) {
+            event.preventDefault();
+            on_name_change(get_details());
+        },
         type: "text",
         value: name
     });
 
     url_input = dom("input", {
+        oninput: function (event) {
+            event.preventDefault();
+            on_url_change(get_details());
+        },
         type: "text",
         value: url
     });
@@ -76,16 +97,25 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
     });
 
     add_button = dom("button", {
-        onclick: function () {
+        disabled: add_disabled,
+        onclick: function on_add() {
             on_add_source(get_details());
         }
     }, ["Add"]);
 
     save_button = dom("button", {
-        onclick: function () {
+        disabled: save_disabled,
+        onclick: function on_save() {
             on_save_source(get_details());
         }
     }, ["Save"]);
+
+    delete_button = dom("button", {
+        disabled: delete_disabled,
+        onclick: function on_delete() {
+            on_delete_source(get_details());
+        }
+    }, ["Delete"]);
 
     detail_component = dom("ul", [
         dom("li", [
@@ -122,7 +152,8 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
         ]),
         dom("li", [
             add_button,
-            save_button
+            save_button,
+            delete_button
         ])
     ]);
 
@@ -130,7 +161,10 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
 
     element.update_details = update_details;
     element.clear_details = clear_details;
-    elememnt.get_details = get_details;
+    element.get_details = get_details;
+    element.disable_save = disable_element(save_button);
+    element.disable_add = disable_element(add_button);
+    element.disable_delete = disable_element(delete_button);
 });
 
 //demo import demo from "./demo.js";
@@ -139,6 +173,9 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
 //demo     min_zoom_level: 0,
 //demo     name: "Mapzen Global Terrain",
 //demo     on_add_source: function (props) {
+//demo         console.log(props);
+//demo     },
+//demo     on_delete_source: function (props) {
 //demo         console.log(props);
 //demo     },
 //demo     on_add_source: function (props) {
