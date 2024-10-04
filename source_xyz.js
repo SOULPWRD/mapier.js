@@ -14,8 +14,7 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
 }) {
     let source_select;
     let source_details;
-
-    const sources_list = [
+    let sources_list = [
 // make empty option first
         {
             max_zoom_level: 0,
@@ -39,6 +38,30 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
 
     const shadow = element.attachShadow({mode: "closed"});
 
+    function on_input_change({name, url}) {
+// default buttons state
+        source_details.disable_add(false);
+        source_details.disable_save(false);
+        source_details.disable_delete(false);
+
+        if (!url || !name) {
+            source_details.disable_add(true);
+            source_details.disable_save(true);
+            source_details.disable_delete(true);
+            return;
+        }
+
+        if (sources_list.some(function (source) {
+            return source.name === name;
+        }) === true) {
+            source_details.disable_save(true);
+            return;
+        } else {
+            source_details.disable_delete(true);
+            return;
+        }
+    }
+
     source_select = dom("select", {
         onchange: function (event) {
             const source = sources_list.find(function (source) {
@@ -47,11 +70,18 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
                 );
             });
 
-            return (
-                source.name === "Custom"
-                ? source_details.clear_details()
-                : source_details.update_details(source)
-            );
+            if (source.name === "Custom") {
+                source_details.clear_details();
+                source_details.disable_delete(true);
+                source_details.disable_add(true);
+                source_details.disable_save(true);
+                return;
+            }
+
+            source_details.update_details(source);
+            source_details.disable_add(false);
+            source_details.disable_delete(false);
+            source_details.disable_save(true);
         }
     }, sources_list.map(function (source) {
         return dom("option", {
@@ -60,14 +90,34 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
     }));
 
     source_details = make_details_xyz({
+        delete_disabled: true,
         on_add_source,
+        on_delete_source: function on_delete_source(source) {
+            sources_list = sources_list.filter(function ({name}) {
+                return name !== source.name;
+            });
+
+            const option = Array.from(
+                source_select.options
+            ).find(function (option) {
+                return source.name === option.value;
+            });
+            option.remove();
+
+            source_details.clear_details();
+            source_details.disable_delete(true);
+            source_details.disable_add(true);
+            source_details.disable_save(true);
+        },
+        on_name_change: on_input_change,
         on_save_source: function on_save_source(source) {
             source_select.append(dom("option", {
                 selected: true,
                 value: source.name
             }, [source.name]));
             sources_list.push(source);
-        }
+        },
+        on_url_change: on_input_change
     });
 
     shadow.append(source_select, source_details);
