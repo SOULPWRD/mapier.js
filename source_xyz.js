@@ -10,12 +10,9 @@ import dom from "./dom.js";
 import make_details_xyz from "./details_xyz.js";
 
 const make_source_xyz = make_ui("source-xyz", function (element, {
-    on_add_source
-}) {
-    let source_select;
-    let source_details;
-    let sources_list = [
-// make empty option first
+    on_add_source,
+    sources_list = [
+        // make empty option first
         {
             max_zoom_level: 0,
             min_zoom_level: 0,
@@ -34,7 +31,10 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
             name: "MapZen",
             url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
         }
-    ];
+    ]
+}) {
+    let source_select;
+    let source_details;
 
     const shadow = element.attachShadow({mode: "closed"});
 
@@ -60,6 +60,10 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
             source_details.disable_delete(true);
             return;
         }
+    }
+
+    function get_sources_list() {
+        return sources_list;
     }
 
     source_select = dom("select", {
@@ -121,6 +125,8 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
     });
 
     shadow.append(source_select, source_details);
+
+    element.get_sources_list = get_sources_list;
 });
 
 //demo import demo from "./demo.js";
