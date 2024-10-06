@@ -5,41 +5,51 @@
 
 /*jslint browser */
 
-import make_map_ui from "./map.js";
-import make_bottom_pane from "./bottom_pane.js";
-import background_switcher from "./background_switcher.js";
+import map_ui from "./map.js";
+import bottom_pane_ui from "./bottom_pane.js";
+import dialog_ui from "./dialog_ui.js";
+import source_manager_ui from "./source_manager_ui.js";
 import make_ui from "./ui.js";
+import dom from "./dom.js";
 
-const app = make_ui("main-app", function (element) {
+const app = make_ui("app-ui", function (element) {
+    let dialog;
+    let map;
+    let bottom_pane;
+    let source_manager;
+    let source_manager_button;
 
     function mount(target) {
         document.querySelector(target).append(element);
     }
 
-    const map_ui = make_map_ui()
-    const bottom_pane_ui = make_bottom_pane({
-        map: map_ui.get_map()
+    map = map_ui();
+    bottom_pane = bottom_pane_ui({
+        map: map.get_map()
+    });
+    dialog = dialog_ui({
+        on_close() {
+            dialog.close();
+        },
+        visibility: false
+    });
+    source_manager = source_manager_ui({
+        map: map.get_map()
     });
 
+    source_manager_button = dom("button", {
+        onclick: function () {
+            dialog.open(source_manager);
+        }
+    }, ["Source manager"])
+
     element.append(
-        map_ui,
-        background_switcher({
-            layers: [
-                {
-                    checked: true,
-                    id: "osm",
-                    title: "OSM"
-                },
-                {
-                    checked: false,
-                    id: "forest",
-                    title: "Forest map"
-                }
-            ],
-            title: "Backgrounds"
-        }),
-        bottom_pane_ui
+        map,
+        source_manager_button,
+        bottom_pane,
+        dialog
     );
+
 
     element.mount = mount;
 

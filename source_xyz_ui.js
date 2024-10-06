@@ -7,9 +7,9 @@
 
 import make_ui from "./ui.js";
 import dom from "./dom.js";
-import make_details_xyz from "./details_xyz.js";
+import details_xyz_ui from "./details_xyz_ui.js";
 
-const make_source_xyz = make_ui("source-xyz", function (element, {
+const source_xyz_ui = make_ui("source-xyz-ui", function (element, {
     on_add_source,
     sources_list = [
         // make empty option first
@@ -93,7 +93,7 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
         }, [source.name]);
     }));
 
-    source_details = make_details_xyz({
+    source_details = details_xyz_ui({
         delete_disabled: true,
         on_add_source,
         on_delete_source: function on_delete_source(source) {
@@ -130,10 +130,10 @@ const make_source_xyz = make_ui("source-xyz", function (element, {
 });
 
 //demo import demo from "./demo.js";
-//demo demo(make_source_xyz({
+//demo demo(source_xyz_ui({
 //demo     on_add_source: function (source) {
 //demo         console.log(source);
 //demo     }
 //demo }));
 
-export default Object.freeze(make_source_xyz);
+export default Object.freeze(source_xyz_ui);

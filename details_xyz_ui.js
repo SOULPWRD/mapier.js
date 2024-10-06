@@ -6,7 +6,7 @@
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 
-const make_details_xyz = make_ui("details-xyz", function (element, {
+const details_xyz_ui = make_ui("details-xyz-ui", function (element, {
     add_disabled = false,
     delete_disabled = false,
     max_zoom_level = 0,
@@ -168,7 +168,7 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
 });
 
 //demo import demo from "./demo.js";
-//demo demo(make_details_xyz({
+//demo demo(details_xyz_ui({
 //demo     max_zoom_level: 15,
 //demo     min_zoom_level: 0,
 //demo     name: "Mapzen Global Terrain",
@@ -184,4 +184,4 @@ const make_details_xyz = make_ui("details-xyz", function (element, {
 //demo     url: "https://demos3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
 //demo }));
 
-export default Object.freeze(make_details_xyz);
+export default Object.freeze(details_xyz_ui);

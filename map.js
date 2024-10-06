@@ -7,7 +7,7 @@ import {defaults} from 'ol/control/defaults.js'
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 
-const map_ui = make_ui("ui-map", function (element) {
+const map_ui = make_ui("map-ui", function (element) {
     const ol_map = new Map({
         controls: defaults({
             attribution: false,

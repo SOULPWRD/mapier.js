@@ -5,21 +5,30 @@
 
 /*jslint browser */
 
+import Tile_layer from "ol/layer/Tile.js";
+import XYZ_source from "ol/source/XYZ.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
-import make_source_xyz from "./source_xyz.js";
+import source_xyz_ui from "./source_xyz_ui.js";
 
-const make_source_manager = make_ui("source-manager", function (element, {
-    on_close
+const source_manager_ui = make_ui("source-manager-ui", function (element, {
+    map
 }) {
     let source_content;
     let sources_container;
 
     const sources = [
         {
-            component: make_source_xyz({
-                on_add_source: function () {
-                    // add layer to the map
+            component: source_xyz_ui({
+                on_add_source: function (source) {
+                    const layer = new Tile_layer({
+                        source: new XYZ_source({
+                            url: source.url,
+                            minZoom: source.min_zoom_level,
+                            maxZoom: source.max_zoom_level
+                        })
+                    });
+                    map.addLayer(layer);
                 }
             }),
             image: "",
@@ -58,6 +67,6 @@ const make_source_manager = make_ui("source-manager", function (element, {
 });
 
 //demo import demo from "./demo.js";
-//demo demo(make_source_manager({on_close: console.log}));
+//demo demo(source_manager_ui({on_close: console.log}));
 
-export default Object.freeze(make_source_manager);
+export default Object.freeze(source_manager_ui);
