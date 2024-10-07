@@ -16472,6 +16472,194 @@ function createOptionsInternal(options) {
     values
   };
 }
+let instances = /* @__PURE__ */ new WeakMap();
+function ui(tag, create2) {
+  if (customElements.get(tag) === void 0) {
+    customElements.define(tag, class extends HTMLElement {
+      connectedCallback() {
+        var _a;
+        const connect = (_a = instances.get(this)) == null ? void 0 : _a.connect;
+        if (typeof connect === "function") {
+          connect();
+        }
+      }
+      disconnectedCallback() {
+        var _a;
+        const disconnect = (_a = instances.get(this)) == null ? void 0 : _a.disconnect;
+        if (typeof disconnect === "function") {
+          disconnect();
+        }
+      }
+    });
+  }
+  return Object.freeze(function make_element(params) {
+    const element = document.createElement(tag);
+    instances.set(element, create2(element, params));
+    return element;
+  });
+}
+const make_ui = Object.freeze(ui);
+function dom(tag, properties = {}, children = []) {
+  if (typeof properties === "string" || Array.isArray(properties)) {
+    children = properties;
+    properties = {};
+  }
+  if (!Array.isArray(children)) {
+    children = [children];
+  }
+  const element = typeof tag === "string" ? document.createElement(tag) : tag;
+  element.append(...children);
+  Object.keys(properties).forEach(function(name) {
+    element[name] = properties[name];
+  });
+  Object.assign(element.style, properties.style);
+  return element;
+}
+const dom$1 = Object.freeze(dom);
+const map_ui = make_ui("map-ui", function(element) {
+  const ol_map = new Map({
+    controls: defaults$1({
+      attribution: false,
+      attributionOptions: false,
+      rotate: false,
+      rotateOptions: false,
+      zoom: false,
+      zoomOptions: false
+    }),
+    view: new View({
+      center: [0, 0],
+      zoom: 2
+    })
+  });
+  const shadow = element.attachShadow({ mode: "closed" });
+  const map_root = dom$1("div", {
+    style: {
+      height: "500px",
+      position: "relative",
+      width: "100%"
+    }
+  });
+  function get_map() {
+    return ol_map;
+  }
+  function dispose_map() {
+    ol_map.dispose();
+  }
+  element.get_map = get_map;
+  shadow.append(map_root);
+  return {
+    connect() {
+      ol_map.setTarget(map_root);
+    },
+    disconnect() {
+      dispose_map();
+    }
+  };
+});
+const map_ui$1 = Object.freeze(map_ui);
+const coordinates_ui = make_ui("map-coordinates", function(element, {
+  coords,
+  on_coords_update
+}) {
+  const shadow = element.attachShadow({ mode: "closed" });
+  const coords_element = dom$1("input", {
+    onchange: function on_change(event) {
+      event.preventDefault();
+      const value = event.target.value;
+      const [x, y] = value.split(",");
+      on_coords_update(x == null ? void 0 : x.trim(), y == null ? void 0 : y.trim());
+    },
+    type: "text"
+  });
+  function update_coordinates(x, y) {
+    coords.x = x;
+    coords.y = y;
+    coords_element.value = `${coords.x}, ${coords.y}`;
+  }
+  function clear_coordinates() {
+    coords_element.value = "";
+  }
+  shadow.append(coords_element);
+  element.update_coordinates = update_coordinates;
+  element.clear_coordinates = clear_coordinates;
+  return {
+    connect() {
+      update_coordinates(coords.x, coords.y);
+    },
+    disconnect() {
+      clear_coordinates();
+    }
+  };
+});
+const make_coordinates = Object.freeze(coordinates_ui);
+const make_bottom_pane = make_ui("map-bottom-pane", function(element, {
+  map
+}) {
+  const shadow = element.attachShadow({ mode: "closed" });
+  const view = map.getView();
+  const [x, y] = view.getCenter();
+  const coords_ui = make_coordinates({
+    coords: { x, y },
+    on_coords_update(x2, y2) {
+      view.setCenter([x2, y2]);
+    }
+  });
+  function update_coords(event) {
+    const [x2, y2] = event.coordinate;
+    coords_ui.update_coordinates(x2, y2);
+  }
+  map.on("pointermove", update_coords);
+  shadow.append(coords_ui);
+  return {
+    disconnect() {
+      map.un("pointermove", update_coords);
+    }
+  };
+});
+const bottom_pane_ui = Object.freeze(make_bottom_pane);
+function render_css$1({ visibility }) {
+  const display = visibility ? "block;" : "none;";
+  return `
+        :host {
+            display: ${display}
+        }`;
+}
+const dialog_ui = make_ui("dialog-ui", function(element, {
+  on_close,
+  visibility
+}) {
+  let close_button;
+  let dialog_container;
+  const style = dom$1("style");
+  const shadow = element.attachShadow({ mode: "closed" });
+  function close() {
+    style.textContent = render_css$1({ visibility: false });
+    dialog_container.innerHTML = "";
+  }
+  function open(content) {
+    style.textContent = render_css$1({ visibility: true });
+    dialog_container.append(content);
+  }
+  close_button = dom$1("button", {
+    onclick: function(event) {
+      event.preventDefault();
+      on_close();
+    }
+  }, ["Close"]);
+  dialog_container = dom$1("div");
+  shadow.append(style, close_button, dialog_container);
+  element.open = open;
+  element.close = close;
+  return {
+    connect() {
+      style.textContent = render_css$1({ visibility });
+    },
+    disconnect() {
+      close();
+    }
+  };
+});
+const dialog_ui$1 = Object.freeze(dialog_ui);
 const TileProperty = {
   PRELOAD: "preload",
   USE_INTERIM_TILES_ON_ERROR: "useInterimTilesOnError"
@@ -21225,270 +21413,425 @@ class XYZ extends TileImage {
     return this.gutter_;
   }
 }
-const ATTRIBUTION = '&#169; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.';
-class OSM extends XYZ {
-  /**
-   * @param {Options} [options] Open Street Map options.
-   */
-  constructor(options) {
-    options = options || {};
-    let attributions;
-    if (options.attributions !== void 0) {
-      attributions = options.attributions;
-    } else {
-      attributions = [ATTRIBUTION];
-    }
-    const crossOrigin = options.crossOrigin !== void 0 ? options.crossOrigin : "anonymous";
-    const url = options.url !== void 0 ? options.url : "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-    super({
-      attributions,
-      attributionsCollapsible: false,
-      cacheSize: options.cacheSize,
-      crossOrigin,
-      interpolate: options.interpolate,
-      maxZoom: options.maxZoom !== void 0 ? options.maxZoom : 19,
-      reprojectionErrorThreshold: options.reprojectionErrorThreshold,
-      tileLoadFunction: options.tileLoadFunction,
-      transition: options.transition,
-      url,
-      wrapX: options.wrapX,
-      zDirection: options.zDirection
-    });
-  }
-}
-let instances = /* @__PURE__ */ new WeakMap();
-function ui(tag, create2) {
-  if (customElements.get(tag) === void 0) {
-    customElements.define(tag, class extends HTMLElement {
-      connectedCallback() {
-        var _a;
-        const connect = (_a = instances.get(this)) == null ? void 0 : _a.connect;
-        if (typeof connect === "function") {
-          connect();
-        }
-      }
-      disconnectedCallback() {
-        var _a;
-        const disconnect = (_a = instances.get(this)) == null ? void 0 : _a.disconnect;
-        if (typeof disconnect === "function") {
-          disconnect();
-        }
-      }
-    });
-  }
-  return Object.freeze(function make_element(params) {
-    const element = document.createElement(tag);
-    instances.set(element, create2(element, params));
-    return element;
-  });
-}
-const make_ui = Object.freeze(ui);
-function dom(tag, properties = {}, children = []) {
-  if (typeof properties === "string" || Array.isArray(properties)) {
-    children = properties;
-    properties = {};
-  }
-  if (!Array.isArray(children)) {
-    children = [children];
-  }
-  const element = typeof tag === "string" ? document.createElement(tag) : tag;
-  element.append(...children);
-  Object.keys(properties).forEach(function(name) {
-    element[name] = properties[name];
-  });
-  Object.assign(element.style, properties.style);
-  return element;
-}
-const dom$1 = Object.freeze(dom);
-const map_ui = make_ui("ui-map", function(element) {
-  const ol_map = new Map({
-    controls: defaults$1({
-      attribution: false,
-      attributionOptions: false,
-      rotate: false,
-      rotateOptions: false,
-      zoom: false,
-      zoomOptions: false
-    }),
-    layers: [
-      new TileLayer({
-        source: new OSM()
-      })
-    ],
-    view: new View({
-      center: [0, 0],
-      zoom: 2
-    })
-  });
-  const shadow = element.attachShadow({ mode: "closed" });
-  const map_root = dom$1("div", {
-    style: {
-      position: "relative",
-      width: "100%",
-      height: "500px"
-    }
-  });
-  function get_map() {
-    return ol_map;
-  }
-  function dispose_map() {
-    ol_map.dispose();
-  }
-  element.get_map = get_map;
-  shadow.append(map_root);
-  return {
-    connect() {
-      ol_map.setTarget(map_root);
-    },
-    disconnect() {
-      dispose_map();
-    }
-  };
-});
-const make_map_ui = Object.freeze(map_ui);
-const coordinates_ui = make_ui("map-coordinates", function(element, {
-  coords,
-  on_coords_update
+const details_xyz_ui = make_ui("details-xyz-ui", function(element, {
+  add_disabled = false,
+  delete_disabled = false,
+  max_zoom_level = 0,
+  min_zoom_level = 0,
+  name = "",
+  on_add_source,
+  on_delete_source,
+  on_name_change,
+  on_save_source,
+  on_url_change,
+  save_disabled = false,
+  url = ""
 }) {
+  let name_input;
+  let url_input;
+  let min_zoom_input;
+  let max_zoom_input;
+  let detail_component;
+  let add_button;
+  let save_button;
+  let delete_button;
   const shadow = element.attachShadow({ mode: "closed" });
-  const coords_element = dom$1("input", {
-    onchange: function on_change(event) {
+  function get_details() {
+    return Object.freeze({
+      max_zoom_level: max_zoom_input.disabled ? void 0 : max_zoom_input == null ? void 0 : max_zoom_input.value,
+      min_zoom_level: min_zoom_input.disabled ? void 0 : min_zoom_input == null ? void 0 : min_zoom_input.value,
+      name: name_input == null ? void 0 : name_input.value,
+      url: url_input == null ? void 0 : url_input.value
+    });
+  }
+  function update_details(detail = {}) {
+    name_input.value = detail.name ?? name;
+    url_input.value = detail.url ?? url;
+    min_zoom_input.value = detail.min_zoom_level ?? min_zoom_level;
+    max_zoom_input.value = detail.max_zoom_level ?? max_zoom_level;
+  }
+  function clear_details() {
+    name_input.value = "";
+    url_input.value = "";
+    min_zoom_input.value = 0;
+    max_zoom_input.value = 0;
+  }
+  function disable_element(element2) {
+    return function(value) {
+      element2.disabled = value;
+    };
+  }
+  name_input = dom$1("input", {
+    oninput: function(event) {
       event.preventDefault();
-      const value = event.target.value;
-      const [x, y] = value.split(",");
-      on_coords_update(x == null ? void 0 : x.trim(), y == null ? void 0 : y.trim());
+      on_name_change(get_details());
     },
-    type: "text"
+    type: "text",
+    value: name
   });
-  function update_coordinates(x, y) {
-    coords.x = x;
-    coords.y = y;
-    coords_element.value = `${coords.x}, ${coords.y}`;
-  }
-  function clear_coordinates() {
-    coords_element.value = "";
-  }
-  shadow.append(coords_element);
-  element.update_coordinates = update_coordinates;
-  element.clear_coordinates = clear_coordinates;
-  return {
-    connect() {
-      update_coordinates(coords.x, coords.y);
+  url_input = dom$1("input", {
+    oninput: function(event) {
+      event.preventDefault();
+      on_url_change(get_details());
     },
-    disconnect() {
-      clear_coordinates();
+    type: "text",
+    value: url
+  });
+  min_zoom_input = dom$1("input", {
+    type: "number",
+    value: min_zoom_level
+  });
+  max_zoom_input = dom$1("input", {
+    type: "number",
+    value: max_zoom_level
+  });
+  add_button = dom$1("button", {
+    disabled: add_disabled,
+    onclick: function on_add() {
+      on_add_source(get_details());
     }
-  };
+  }, ["Add"]);
+  save_button = dom$1("button", {
+    disabled: save_disabled,
+    onclick: function on_save() {
+      on_save_source(get_details());
+    }
+  }, ["Save"]);
+  delete_button = dom$1("button", {
+    disabled: delete_disabled,
+    onclick: function on_delete() {
+      on_delete_source(get_details());
+    }
+  }, ["Delete"]);
+  detail_component = dom$1("ul", [
+    dom$1("li", [
+      dom$1("label", ["Name"]),
+      name_input
+    ]),
+    dom$1("li", [
+      dom$1("label", ["URL"]),
+      url_input
+    ]),
+    dom$1("li", [
+      dom$1("input", {
+        checked: true,
+        id: "min_zoom",
+        onchange: function(event) {
+          min_zoom_input.disabled = event.target.checked === false;
+        },
+        type: "checkbox"
+      }),
+      dom$1("label", { htmlFor: "min_zoom" }, ["Min. Zoom Level"]),
+      min_zoom_input
+    ]),
+    dom$1("li", [
+      dom$1("input", {
+        checked: true,
+        id: "max_zoom",
+        onchange: function(event) {
+          max_zoom_input.disabled = event.target.checked === false;
+        },
+        type: "checkbox"
+      }),
+      dom$1("label", { htmlFor: "max_zoom" }, ["Max. Zoom Level"]),
+      max_zoom_input
+    ]),
+    dom$1("li", [
+      add_button,
+      save_button,
+      delete_button
+    ])
+  ]);
+  shadow.append(detail_component);
+  element.update_details = update_details;
+  element.clear_details = clear_details;
+  element.get_details = get_details;
+  element.disable_save = disable_element(save_button);
+  element.disable_add = disable_element(add_button);
+  element.disable_delete = disable_element(delete_button);
 });
-const make_coordinates = Object.freeze(coordinates_ui);
-const make_bottom_pane = make_ui("map-bottom-pane", function(element, {
+const details_xyz_ui$1 = Object.freeze(details_xyz_ui);
+const source_xyz_ui = make_ui("source-xyz-ui", function(element, {
+  on_add_source,
+  sources_list = [
+    // make empty option first
+    {
+      max_zoom_level: 0,
+      min_zoom_level: 0,
+      name: "Custom",
+      url: ""
+    },
+    {
+      max_zoom_level: 19,
+      min_zoom_level: 0,
+      name: "OpenStreetMap",
+      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    },
+    {
+      max_zoom_level: 15,
+      min_zoom_level: 0,
+      name: "MapZen",
+      url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+    }
+  ]
+}) {
+  let source_select;
+  let source_details;
+  const shadow = element.attachShadow({ mode: "closed" });
+  function on_input_change({ name, url }) {
+    source_details.disable_add(false);
+    source_details.disable_save(false);
+    source_details.disable_delete(false);
+    if (!url || !name) {
+      source_details.disable_add(true);
+      source_details.disable_save(true);
+      source_details.disable_delete(true);
+      return;
+    }
+    if (sources_list.some(function(source) {
+      return source.name === name;
+    }) === true) {
+      source_details.disable_save(true);
+      return;
+    } else {
+      source_details.disable_delete(true);
+      return;
+    }
+  }
+  function get_sources_list() {
+    return sources_list;
+  }
+  source_select = dom$1("select", {
+    onchange: function(event) {
+      const source = sources_list.find(function(source2) {
+        return source2.name === event.target.value;
+      });
+      if (source.name === "Custom") {
+        source_details.clear_details();
+        source_details.disable_delete(true);
+        source_details.disable_add(true);
+        source_details.disable_save(true);
+        return;
+      }
+      source_details.update_details(source);
+      source_details.disable_add(false);
+      source_details.disable_delete(false);
+      source_details.disable_save(true);
+    }
+  }, sources_list.map(function(source) {
+    return dom$1("option", {
+      value: source.name
+    }, [source.name]);
+  }));
+  source_details = details_xyz_ui$1({
+    delete_disabled: true,
+    on_add_source,
+    on_delete_source: function on_delete_source(source) {
+      sources_list = sources_list.filter(function({ name }) {
+        return name !== source.name;
+      });
+      const option = Array.from(
+        source_select.options
+      ).find(function(option2) {
+        return source.name === option2.value;
+      });
+      option.remove();
+      source_details.clear_details();
+      source_details.disable_delete(true);
+      source_details.disable_add(true);
+      source_details.disable_save(true);
+    },
+    on_name_change: on_input_change,
+    on_save_source: function on_save_source(source) {
+      source_select.append(dom$1("option", {
+        selected: true,
+        value: source.name
+      }, [source.name]));
+      sources_list.push(source);
+    },
+    on_url_change: on_input_change
+  });
+  shadow.append(source_select, source_details);
+  element.get_sources_list = get_sources_list;
+});
+const source_xyz_ui$1 = Object.freeze(source_xyz_ui);
+const source_manager_ui = make_ui("source-manager-ui", function(element, {
+  map,
+  on_add_source
+}) {
+  let source_content;
+  let sources_container;
+  const sources = [
+    {
+      component: source_xyz_ui$1({
+        on_add_source: function(source) {
+          const ol_layer = new TileLayer({
+            source: new XYZ({
+              maxZoom: source.max_zoom_level,
+              minZoom: source.min_zoom_level,
+              url: source.url
+            })
+          });
+          map.addLayer(ol_layer);
+          on_add_source({
+            ol_layer,
+            source
+          });
+        }
+      }),
+      image: "",
+      name: "XYZ"
+    },
+    {
+      component: dom$1("div", ["C2"]),
+      image: "",
+      name: "PostgreSQL"
+    }
+  ];
+  const shadow = element.attachShadow({ mode: "closed" });
+  const sources_list = sources.map(function(source) {
+    return dom$1("li", [
+      dom$1("input", {
+        id: source.name,
+        name: "source",
+        onchange: function() {
+          source_content.innerHTML = "";
+          source_content.append(source.component);
+        },
+        type: "radio"
+      }),
+      dom$1("label", {
+        htmlFor: source.name
+      }, [source.name])
+    ]);
+  });
+  source_content = dom$1("div");
+  sources_container = dom$1("ul", sources_list);
+  shadow.append(sources_container, source_content);
+});
+const source_manager_ui$1 = Object.freeze(source_manager_ui);
+function render_css() {
+  return `
+        label:hover {
+            cursor: pointer;
+        }
+    `;
+}
+const layer_ui = make_ui("layer-ui", function(element, {
+  is_checked = false,
+  on_layer_removed,
+  on_properties_clicked,
+  on_visibility_checked,
+  title
+}) {
+  let check_box;
+  let label;
+  let delete_button;
+  const style = dom$1("style");
+  const shadow = element.attachShadow({ mode: "closed" });
+  style.textContent = render_css();
+  check_box = dom$1("input", {
+    checked: is_checked,
+    onchange: function(event) {
+      on_visibility_checked(event.target.checked);
+    },
+    type: "checkbox"
+  });
+  label = dom$1("label", {
+    onclick: function(event) {
+      event.preventDefault();
+      on_properties_clicked();
+    }
+  }, [
+    title
+  ]);
+  delete_button = dom$1("button", {
+    onclick: function(event) {
+      event.preventDefault();
+      on_layer_removed();
+    }
+  }, [
+    "Delete"
+  ]);
+  shadow.append(style, check_box, label, delete_button);
+});
+const layer_ui$1 = Object.freeze(layer_ui);
+const layers_ui = make_ui("layers-ui", function(element, {
+  layers = [],
   map
 }) {
+  let layer_switcher;
   const shadow = element.attachShadow({ mode: "closed" });
-  const view = map.getView();
-  const [x, y] = view.getCenter();
-  const coords_ui = make_coordinates({
-    coords: { x, y },
-    on_coords_update(x2, y2) {
-      view.setCenter([x2, y2]);
-    }
-  });
-  function update_coords(event) {
-    const [x2, y2] = event.coordinate;
-    coords_ui.update_coordinates(x2, y2);
-  }
-  map.on("pointermove", update_coords);
-  shadow.append(coords_ui);
-  return {
-    disconnect() {
-      map.un("pointermove", update_coords);
-    }
-  };
-});
-const make_bottom_pane$1 = Object.freeze(make_bottom_pane);
-const background_switcher = make_ui(
-  "background-switcher",
-  function(element, props) {
-    const {
-      title,
-      layers
-    } = props;
-    const shadow = element.attachShadow({ mode: "closed" });
-    function update_map() {
-    }
-    const background_layer = function({
-      id,
-      checked,
-      title: title2
-    }) {
-      return dom$1("li", [
-        dom$1("input", {
-          id,
-          checked,
-          name: "background",
-          onclick: update_map,
-          type: "radio"
-        }),
-        dom$1("label", {
-          htmlFor: id
-        }, title2)
-      ]);
-    };
-    const backgrounds = layers.map(function({
-      id,
-      title: title2,
-      checked
-    }) {
-      return background_layer({
-        id,
-        checked,
-        title: title2
-      });
+  function add_layer(source, ol_layer) {
+    let layer_item;
+    const layer = layer_ui$1({
+      is_checked: true,
+      on_layer_removed: function() {
+        map.removeLayer(ol_layer);
+        layer_item.remove();
+      },
+      on_properties_clicked: function() {
+      },
+      on_visibility_checked: function(checked) {
+        ol_layer.setVisible(checked);
+      },
+      title: source.name
     });
-    const switcher = dom$1("div", [
-      dom$1("h2", title),
-      dom$1("ul", {
-        style: {
-          "list-style-type": "none"
-        }
-      }, backgrounds)
-    ]);
-    shadow.append(switcher);
+    layer_item = dom$1("li", [layer]);
+    layer_switcher.append(layer_item);
   }
-);
-const background_switcher$1 = Object.freeze(background_switcher);
-const app = make_ui("main-app", function(element) {
+  layer_switcher = dom$1("ul");
+  layers.forEach(add_layer);
+  shadow.append(layer_switcher);
+  element.add_layer = add_layer;
+});
+const layers_ui$1 = Object.freeze(layers_ui);
+const app_ui = make_ui("app-ui", function(element) {
+  let dialog;
+  let map;
+  let bottom_pane;
+  let source_manager;
+  let source_manager_button;
+  let layers;
   function mount(target) {
     document.querySelector(target).append(element);
   }
-  const map_ui2 = make_map_ui();
-  const bottom_pane_ui = make_bottom_pane$1({
-    map: map_ui2.get_map()
+  map = map_ui$1();
+  bottom_pane = bottom_pane_ui({
+    map: map.get_map()
   });
+  dialog = dialog_ui$1({
+    on_close() {
+      dialog.close();
+    },
+    visibility: false
+  });
+  source_manager = source_manager_ui$1({
+    map: map.get_map(),
+    on_add_source: function on_add_source({ ol_layer, source }) {
+      layers.add_layer(source, ol_layer);
+    }
+  });
+  layers = layers_ui$1({
+    map: map.get_map()
+  });
+  source_manager_button = dom$1("button", {
+    onclick: function() {
+      dialog.open(source_manager);
+    }
+  }, ["Source manager"]);
   element.append(
-    map_ui2,
-    background_switcher$1({
-      layers: [
-        {
-          checked: true,
-          id: "osm",
-          title: "OSM"
-        },
-        {
-          checked: false,
-          id: "forest",
-          title: "Forest map"
-        }
-      ],
-      title: "Backgrounds"
-    }),
-    bottom_pane_ui
+    map,
+    source_manager_button,
+    layers,
+    bottom_pane,
+    dialog
   );
   element.mount = mount;
   return element;
 });
-const app$1 = Object.freeze(app);
-app$1().mount("#root");
+const app_ui$1 = Object.freeze(app_ui);
+app_ui$1().mount("#root");
 </script>
                 <script type="application/json" data-app="store">{"components":[{"id":"background_switcher","map_refs":["background_switcher_map_1","background_switcher_map_2"]},{"id":"map","map_refs":["main_map"]}],"controls":[{"id":"map_controls_1","attribution":false,"attributionOptions":false,"rotate":false,"rotateOptions":false,"zoom":false,"zoomOptions":false}],"layers":[{"id":"osm","source":{"type":"osm"},"type":"tile_layer"},{"id":"thunder_forest","source":{"type":"image_tile","url":"https://{a-c}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=0e6fc415256d4fbb9b5166a718591d71"},"type":"tile_layer"}],"maps":[{"active_layer":"osm","active_view":"map","control_refs":["map_controls_1"],"id":"main_map","layer_refs":["osm","thunder_forest"],"view_refs":["map"]},{"active_layer":"osm","active_view":"map","control_refs":["map_controls_1"],"id":"background_switcher_map_1","layer_refs":["osm"],"view_refs":["map"]},{"active_view":"map","active_layer":"thunder_forest","control_refs":["map_controls_1"],"id":"background_switcher_map_2","layer_refs":["thunder_forest"],"view_refs":["map"]}],"views":[{"center":[0,0],"id":"map","zoom":2}]}</script>
             </body>
