@@ -13,7 +13,7 @@ import layers_ui from "./layers_ui.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 
-const app = make_ui("app-ui", function (element) {
+const app_ui = make_ui("app-ui", function (element) {
     let dialog;
     let map;
     let bottom_pane;
@@ -67,6 +67,6 @@ const app = make_ui("app-ui", function (element) {
 
 
 //demo import demo from "./demo.js";
-//demo demo(app());
+//demo demo(app_ui());
 
-export default Object.freeze(app);
+export default Object.freeze(app_ui);

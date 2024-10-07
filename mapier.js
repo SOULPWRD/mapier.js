@@ -4,6 +4,6 @@
 
 /*jslint browser */
 
-import app from "./app.js";
+import app_ui from "./app_ui.js";
 
-app().mount("#root");
+app_ui().mount("#root");
