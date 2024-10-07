@@ -1,8 +1,11 @@
+// map_ui.js
+// Martin Pravda
+
+/*jslint */
+
 import Map from "ol/Map.js";
-import Tile from "ol/layer/Tile.js";
-import OSM from "ol/source/OSM.js";
 import View from "ol/View.js";
-import {defaults} from 'ol/control/defaults.js'
+import {defaults} from "ol/control/defaults.js";
 
 import make_ui from "./ui.js";
 import dom from "./dom.js";
@@ -15,13 +18,8 @@ const map_ui = make_ui("map-ui", function (element) {
             rotate: false,
             rotateOptions: false,
             zoom: false,
-            zoomOptions: false,
+            zoomOptions: false
         }),
-        layers: [
-            new Tile({
-                source: new OSM()
-            })
-        ],
         view: new View({
             center: [0, 0],
             zoom: 2
@@ -31,12 +29,12 @@ const map_ui = make_ui("map-ui", function (element) {
     const shadow = element.attachShadow({mode: "closed"});
     const map_root = dom("div", {
         style: {
+            height: "500px",
             position: "relative",
-            width: "100%",
-            height: "500px"
+            width: "100%"
         }
     });
-    
+
     function get_map() {
         return ol_map;
     }
@@ -55,7 +53,7 @@ const map_ui = make_ui("map-ui", function (element) {
         disconnect() {
             dispose_map();
         }
-    }
+    };
 });
 
 //demo import demo from "./demo.js";

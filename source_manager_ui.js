@@ -12,7 +12,8 @@ import dom from "./dom.js";
 import source_xyz_ui from "./source_xyz_ui.js";
 
 const source_manager_ui = make_ui("source-manager-ui", function (element, {
-    map
+    map,
+    on_add_source
 }) {
     let source_content;
     let sources_container;
@@ -21,14 +22,19 @@ const source_manager_ui = make_ui("source-manager-ui", function (element, {
         {
             component: source_xyz_ui({
                 on_add_source: function (source) {
-                    const layer = new Tile_layer({
+                    const ol_layer = new Tile_layer({
                         source: new XYZ_source({
-                            url: source.url,
+                            maxZoom: source.max_zoom_level,
                             minZoom: source.min_zoom_level,
-                            maxZoom: source.max_zoom_level
+                            url: source.url
                         })
                     });
-                    map.addLayer(layer);
+                    map.addLayer(ol_layer);
+
+                    on_add_source({
+                        ol_layer,
+                        source
+                    });
                 }
             }),
             image: "",
