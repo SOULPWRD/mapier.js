@@ -9,7 +9,7 @@ import Tile_layer from "ol/layer/Tile.js";
 import XYZ_source from "ol/source/XYZ.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
-import source_xyz_ui from "./source_xyz_ui.js";
+import xyz_ui from "./xyz_ui.js";
 
 const source_manager_ui = make_ui("source-manager-ui", function (element, {
     map,
@@ -20,7 +20,7 @@ const source_manager_ui = make_ui("source-manager-ui", function (element, {
 
     const sources = [
         {
-            component: source_xyz_ui({
+            component: xyz_ui({
                 on_add_source: function (source) {
                     const ol_layer = new Tile_layer({
                         source: new XYZ_source({

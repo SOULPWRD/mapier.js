@@ -9,7 +9,7 @@ import make_ui from "./ui.js";
 import dom from "./dom.js";
 import details_xyz_ui from "./details_xyz_ui.js";
 
-const source_xyz_ui = make_ui("source-xyz-ui", function (element, {
+const xyz_ui = make_ui("xyz-ui", function (element, {
     on_add_source,
     sources_list = [
         // make empty option first
@@ -130,10 +130,10 @@ const source_xyz_ui = make_ui("source-xyz-ui", function (element, {
 });
 
 //demo import demo from "./demo.js";
-//demo demo(source_xyz_ui({
+//demo demo(xyz_ui({
 //demo     on_add_source: function (source) {
 //demo         console.log(source);
 //demo     }
 //demo }));
 
-export default Object.freeze(source_xyz_ui);
+export default Object.freeze(xyz_ui);
