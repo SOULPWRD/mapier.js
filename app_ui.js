@@ -13,7 +13,9 @@ import layers_ui from "./layers_ui.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 
-const app_ui = make_ui("app-ui", function (element) {
+const app_ui = make_ui("app-ui", function (element, {
+    db
+}) {
     let dialog;
     let map;
     let bottom_pane;

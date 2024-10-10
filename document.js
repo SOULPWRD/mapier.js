@@ -5,7 +5,8 @@
 
 function create_html({
     app_code,
-    state
+    state,
+    wasm_sql
 }) {
     return `
         <!DOCTYPE HTML>
@@ -13,6 +14,9 @@ function create_html({
             <body>
                 <div id="root"></div>
                 <script type="module" data-app="application">${app_code}</script>
+                <script type="application/json" data-app="wasm_sql">${JSON.stringify({
+                    sql: wasm_sql
+                })}</script>
                 <script type="application/json" data-app="store">${state}</script>
             </body>
         </html>
