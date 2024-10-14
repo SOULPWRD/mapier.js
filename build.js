@@ -9,7 +9,6 @@ import {build} from "vite";
 import create_html from "./document.js";
 import parseq from "./parseq.js";
 import create_logger from './logger.js';
-import state from "./state.js";
 
 const logger = create_logger({type: "build"});
 
@@ -62,7 +61,8 @@ function write_document(output_path) {
     return function (callback, [app_code, wasm_sql]) {
         const document = create_html({
             app_code,
-            state: JSON.stringify(state),
+            // todo state
+            state: JSON.stringify({}),
             wasm_sql
         });
 
