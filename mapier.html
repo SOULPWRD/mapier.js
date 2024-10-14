@@ -21505,8 +21505,248 @@ const xyz_ui = make_ui("xyz-ui", function(element, {
   element.get_sources_list = get_sources_list;
 });
 const xyz_ui$1 = Object.freeze(xyz_ui);
+function geopackage({
+  db
+}) {
+  function get_feature_tables() {
+    return db.exec(
+      `
+            SELECT
+                c.table_name AS name,
+                g.geometry_type_name AS geom_type,
+                c.srs_id AS srs
+            FROM
+                gpkg_contents c
+            INNER JOIN
+                gpkg_geometry_columns g
+            ON
+                c.table_name = g.table_name
+            WHERE
+                c.data_type = "features";
+            `
+    );
+  }
+  function get_feature(table_name, column_names = []) {
+    let columns = column_names.length > 0 ? column_names.join(", ") : " * ";
+    return db.exec(
+      `
+                SELECT
+                    ${columns}
+                FROM
+                    ${table_name};
+            `
+    );
+  }
+  return Object.freeze({
+    get_feature,
+    get_feature_tables
+  });
+}
+const geopackage$1 = Object.freeze(geopackage);
+const geopkg_conn_ui = make_ui("geopkg-conn-ui", function(element, {
+  db,
+  db_connections = [],
+  on_connect,
+  on_remove
+}) {
+  let select_box;
+  let connect_button;
+  let file_input;
+  let new_connection_button;
+  let remove_button;
+  const shadow = element.attachShadow({ mode: "closed" });
+  select_box = dom$1("select", db_connections.map(function({ name }) {
+    return dom$1("option", {
+      value: name
+    }, [name]);
+  }));
+  connect_button = dom$1("button", {
+    disabled: db_connections.length < 1,
+    onclick: function on_connect_click() {
+      const connection = db_connections.find(function(connection2) {
+        return select_box.value === connection2.name;
+      });
+      on_connect(connection);
+    }
+  }, ["Connect"]);
+  file_input = dom$1("input", {
+    onchange: function on_new_click(event) {
+      const reader = new FileReader();
+      const [file] = event.target.files;
+      if (file === void 0) {
+        return;
+      }
+      let option = Array.from(select_box.options).find(function(option2) {
+        return option2.value === file.name;
+      });
+      reader.onload = function reader_onload(e) {
+        const buffer = e.target.result;
+        const uint_8_array = new Uint8Array(buffer);
+        db_connections.push({
+          geopackage: geopackage$1({ db: db.sql(uint_8_array) }),
+          name: file.name
+        });
+      };
+      reader.onerror = function() {
+        option == null ? void 0 : option.remove();
+      };
+      reader.readAsArrayBuffer(file);
+      if (option) {
+        option.selected = true;
+        return;
+      }
+      option = dom$1("option", {
+        selected: true,
+        value: file.name
+      }, [file.name]);
+      select_box.append(option);
+      remove_button.disabled = false;
+      connect_button.disabled = false;
+    },
+    style: {
+      display: "none"
+    },
+    type: "file"
+  });
+  new_connection_button = dom$1("button", {
+    onclick: function() {
+      file_input.click();
+    }
+  }, ["New connection"]);
+  remove_button = dom$1("button", {
+    disabled: select_box.options.length < 1,
+    onclick: function on_remove_click() {
+      const option = Array.from(
+        select_box.options
+      ).find(function(option2) {
+        return option2.value === select_box.value;
+      });
+      db_connections = db_connections.filter(function({ name }) {
+        return name !== select_box.value;
+      });
+      file_input.value = "";
+      option.remove();
+      if (db_connections.length < 1) {
+        remove_button.disabled = true;
+        connect_button.disabled = true;
+      }
+      on_remove();
+    }
+  }, ["Remove"]);
+  shadow.append(
+    select_box,
+    connect_button,
+    file_input,
+    new_connection_button,
+    remove_button
+  );
+});
+const geopkg_conn_ui$1 = Object.freeze(geopkg_conn_ui);
+const geopkg_table_ui = make_ui("geopkg-table-ui", function(element, {
+  columns,
+  on_row_click,
+  rows
+}) {
+  let table;
+  let table_rows;
+  let table_columns;
+  const shadow = element.attachShadow({ mode: "closed" });
+  table = dom$1("table");
+  table_columns = dom$1("tr", columns.map(function(column_name) {
+    return dom$1("th", [
+      column_name
+    ]);
+  }));
+  table_rows = rows.map(function(row) {
+    return dom$1("tr", {
+      onclick: function(e) {
+        e.preventDefault();
+        on_row_click(row);
+      }
+    }, row.map(function(value) {
+      return dom$1("td", [value]);
+    }));
+  });
+  table.append(table_columns, ...table_rows);
+  shadow.append(table);
+});
+const geopkg_table_ui$1 = Object.freeze(geopkg_table_ui);
+const geopkg_controls_ui = make_ui("geopkg-controls-ui", function(element, {
+  on_close
+}) {
+  let add_button;
+  let close_button;
+  const shadow = element.attachShadow({ mode: "closed" });
+  function attach_listeners({ on_add }) {
+    add_button.onclick = on_add;
+  }
+  function remove_listeners() {
+    [add_button].forEach(function(button) {
+      delete button.onclick;
+    });
+  }
+  add_button = dom$1("button", [
+    "Add"
+  ]);
+  close_button = dom$1("button", {
+    onclick: function(event) {
+      event.preventDefault();
+      on_close();
+    }
+  }, [
+    "Close"
+  ]);
+  shadow.append(add_button, close_button);
+  element.attach_listeners = attach_listeners;
+  element.remove_listeners = remove_listeners;
+});
+const geopkg_controls_ui$1 = Object.freeze(geopkg_controls_ui);
+const geopkg_ui = make_ui("geopkg-ui", function(element, {
+  db,
+  map,
+  on_close
+}) {
+  let connections;
+  let table;
+  let controls;
+  const shadow = element.attachShadow({ mode: "closed" });
+  connections = geopkg_conn_ui$1({
+    db,
+    on_connect: function on_connect({ geopackage: geopackage2 }) {
+      if (table) {
+        table.remove();
+      }
+      const [result] = geopackage2.get_feature_tables();
+      table = geopkg_table_ui$1({
+        columns: result.columns,
+        on_row_click: function(row) {
+          const [table_name] = row;
+          controls.remove_listeners();
+          controls.attach_listeners({
+            on_add: function() {
+              const [feature] = geopackage2.get_feature(
+                table_name
+              );
+              console.log(feature);
+            }
+          });
+        },
+        rows: result.values
+      });
+      shadow.append(table);
+    },
+    on_remove: function() {
+    }
+  });
+  controls = geopkg_controls_ui$1({
+    on_close
+  });
+  shadow.append(connections, controls);
+});
+const geopkg_ui$1 = Object.freeze(geopkg_ui);
 const source_manager_ui = make_ui("source-manager-ui", function(element, {
   map,
+  db,
   on_add_source
 }) {
   let source_content;
@@ -21533,9 +21773,12 @@ const source_manager_ui = make_ui("source-manager-ui", function(element, {
       name: "XYZ"
     },
     {
-      component: dom$1("div", ["C2"]),
+      component: geopkg_ui$1({
+        db,
+        map
+      }),
       image: "",
-      name: "PostgreSQL"
+      name: "Geopackage"
     }
   ];
   const shadow = element.attachShadow({ mode: "closed" });
@@ -21659,6 +21902,7 @@ const app_ui = make_ui("app-ui", function(element, {
     visibility: false
   });
   source_manager = source_manager_ui$1({
+    db,
     map: map.get_map(),
     on_add_source: function on_add_source({ ol_layer, source }) {
       layers.add_layer(source, ol_layer);
