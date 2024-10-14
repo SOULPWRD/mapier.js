@@ -9,6 +9,7 @@
 
 import make_ui from "./ui.js";
 import dom from "./dom.js";
+import geopackage from "./geopackage.js";
 
 const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
     db,
@@ -41,7 +42,7 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
     }, ["Connect"]);
 
 // this is a small hack of how to hide this default ugly input element
-// we create 2 buttons:
+// therefore 2 buttons are required:
 // 1. input file element with a default "display: none;" style
 // 2. button element that on click will trigger input file to open a dialog
     file_input = dom("input", {
@@ -58,8 +59,10 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
             });
 
             reader.onload = function reader_onload(e) {
+                const buffer = e.target.result;
+                const uint_8_array = new Uint8Array(buffer);
                 db_connections.push({
-                    db: db.sql(e.target.result),
+                    geopackage: geopackage({db: db.sql(uint_8_array)}),
                     name: file.name
                 });
             };

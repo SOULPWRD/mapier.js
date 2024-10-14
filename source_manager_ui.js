@@ -10,9 +10,11 @@ import XYZ_source from "ol/source/XYZ.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 import xyz_ui from "./xyz_ui.js";
+import geopkg_ui from "./geopkg_ui.js";
 
 const source_manager_ui = make_ui("source-manager-ui", function (element, {
     map,
+    db,
     on_add_source
 }) {
     let source_content;
@@ -41,9 +43,12 @@ const source_manager_ui = make_ui("source-manager-ui", function (element, {
             name: "XYZ"
         },
         {
-            component: dom("div", ["C2"]),
+            component: geopkg_ui({
+                db,
+                map
+            }),
             image: "",
-            name: "PostgreSQL"
+            name: "Geopackage"
         }
     ];
 

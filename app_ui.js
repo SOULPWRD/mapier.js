@@ -38,6 +38,7 @@ const app_ui = make_ui("app-ui", function (element, {
         visibility: false
     });
     source_manager = source_manager_ui({
+        db,
         map: map.get_map(),
         on_add_source: function on_add_source({ol_layer, source}) {
             layers.add_layer(source, ol_layer);
