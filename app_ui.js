@@ -12,6 +12,7 @@ import source_manager_ui from "./source_manager_ui.js";
 import layers_ui from "./layers_ui.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
+import projection from "./projection.js";
 
 const app_ui = make_ui("app-ui", function (element, {
     db
@@ -24,6 +25,7 @@ const app_ui = make_ui("app-ui", function (element, {
     let layers;
 
     function mount(target) {
+        projection.register_projections();
         document.querySelector(target).append(element);
     }
 
