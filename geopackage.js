@@ -15,12 +15,12 @@ function geopackage({
                 c.srs_id AS srs
             FROM
                 gpkg_contents c
-            INNER JOIN
+            LEFT JOIN
                 gpkg_geometry_columns g
             ON
                 c.table_name = g.table_name
             WHERE
-                c.data_type = "features";
+                c.data_type = 'features';
             `
         );
     }

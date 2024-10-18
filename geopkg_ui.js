@@ -12,7 +12,7 @@ import geopkg_controls_ui from "./geopkg_controls_ui.js";
 
 const geopkg_ui = make_ui("geopkg-ui", function (element, {
     db,
-    on_add,
+    on_add_source,
     on_close
 }) {
     let connections;
@@ -24,27 +24,41 @@ const geopkg_ui = make_ui("geopkg-ui", function (element, {
         if (table) {
             table.remove();
         }
-        const [result] = geopackage.get_feature_tables();
 
-        table = geopkg_table_ui({
-            columns: result.columns,
-            on_row_click: function (row) {
-                const [table_name] = row;
-                controls.remove_listeners();
-                controls.attach_listeners({
-                    on_add: function () {
-                        const [feature] = geopackage.get_feature(
-                            table_name
-                        );
+        const feature_tables = geopackage.get_feature_tables();
+        
+        Promise.all([
+            feature_tables.get.cols,
+            feature_tables.get.rows
+        ]).then(function ([
+            columns,
+            rows
+        ]) {
+            table = geopkg_table_ui({
+                columns,
+                on_row_click: function (row) {
+                    const [table_name] = row;
+                    controls.remove_listeners();
+                    controls.attach_listeners({
+                        on_add: function () {
+                            geopackage.get_feature(
+                                table_name
+                            ).get.objs.then(function (features) {
+                                
+                                on_add_source({
+                                    name: table_name,
+                                    features
+                                });
+                            });
+                        }
+                    });
+                },
+                rows
+            });
 
-                        on_add(feature);
-                    }
-                });
-            },
-            rows: result.values
-        });
+            shadow.append(table);
+        })
 
-        shadow.append(table);
     }
 
     connections = geopkg_conn_ui({

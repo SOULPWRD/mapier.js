@@ -7,6 +7,10 @@
 
 import Tile_layer from "ol/layer/Tile.js";
 import XYZ_source from "ol/source/XYZ.js";
+import LineString from "ol/geom/LineString.js";
+import Feature from "ol/Feature.js";
+import VectorSource from "ol/source/Vector.js";
+import VectorLayer from "ol/layer/Vector.js";
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 import xyz_ui from "./xyz_ui.js";
@@ -45,7 +49,25 @@ const source_manager_ui = make_ui("source-manager-ui", function (element, {
         {
             component: geopkg_ui({
                 db,
-                map
+                on_add_source: function (source) {
+                    const ol_layer = new VectorLayer({
+                        source: new VectorSource()
+                    });
+
+                    const ol_features = source.features.map(function ({geometry}) {
+                        return new Feature({
+                            geometry: new LineString(geometry.coordinates)
+                        });
+                    });
+
+                    ol_layer.getSource().addFeatures(ol_features);
+                    map.addLayer(ol_layer);
+
+                    on_add_source({
+                        ol_layer,
+                        source
+                    });
+                }
             }),
             image: "",
             name: "Geopackage"

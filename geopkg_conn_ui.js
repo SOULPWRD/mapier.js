@@ -23,6 +23,7 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
     let new_connection_button;
     let remove_button;
 
+    const {splite} = db;
     const shadow = element.attachShadow({mode: "closed"});
 
     select_box = dom("select", db_connections.map(function ({name}) {
@@ -60,10 +61,15 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
 
             reader.onload = function reader_onload(e) {
                 const buffer = e.target.result;
-                const uint_8_array = new Uint8Array(buffer);
-                db_connections.push({
-                    geopackage: geopackage({db: db.sql(uint_8_array)}),
-                    name: file.name
+                const data = new Uint8Array(buffer);
+
+                splite.db(data.buffer).exec(`
+                    SELECT EnableGpkgMode();
+                `).then(function (db) {
+                    db_connections.push({
+                        geopackage: geopackage({db}),
+                        name: file.name
+                    });
                 });
             };
 

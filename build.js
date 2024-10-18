@@ -4,11 +4,11 @@
 /*jslint node */
 
 import {resolve} from "node:path";
-import {writeFile, readFile} from "node:fs";
+import {writeFile} from "node:fs";
 import {build} from "vite";
 import create_html from "./document.js";
 import parseq from "./parseq.js";
-import create_logger from './logger.js';
+import create_logger from "./logger.js";
 
 const logger = create_logger({type: "build"});
 
@@ -17,18 +17,6 @@ function entrify(path) {
         import.meta.dirname,
         path
     );
-}
-
-function read_file(path, encoding = "utf-8") {
-    return function (callback) {
-        readFile(path, encoding, function (err, content) {
-            if (err) {
-                return callback(undefined, err);
-            }
-
-            return callback(content);
-        });
-    };
 }
 
 function create_bundle(input_file, environment) {
@@ -58,12 +46,11 @@ function create_bundle(input_file, environment) {
 
 
 function write_document(output_path) {
-    return function (callback, [app_code, wasm_sql]) {
+    return function (callback, app_code) {
         const document = create_html({
             app_code,
             // todo state
-            state: JSON.stringify({}),
-            wasm_sql
+            state: JSON.stringify({})
         });
 
         writeFile(output_path, document, function (err) {
@@ -89,11 +76,7 @@ function log_result(ignore, reason) {
 
 function build_html(input, output, environment = "development") {
     return parseq.sequence([
-        parseq.parallel([
-            create_bundle(input, environment),
-// read sql wasm file and include it in the script
-            read_file("./node_modules/sql.js/dist/sql-wasm.wasm", "base64")
-        ]),
+        create_bundle(input, environment),
         write_document(output)
     ])(log_result);
 }
