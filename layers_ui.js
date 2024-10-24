@@ -16,7 +16,10 @@ const layers_ui = make_ui("layers-ui", function (element, {
 
     const shadow = element.attachShadow({mode: "closed"});
 
-    function add_layer(source, ol_layer) {
+    function add_layer({
+        ol_layer,
+        source
+    }) {
         let layer_item;
 
         const layer = layer_ui({

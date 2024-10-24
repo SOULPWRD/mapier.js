@@ -12,7 +12,8 @@ function geopackage({
             SELECT
                 c.table_name AS name,
                 g.geometry_type_name AS geom_type,
-                c.srs_id AS srs
+                c.srs_id AS srs,
+                g.column_name as geom_column_name
             FROM
                 gpkg_contents c
             LEFT JOIN

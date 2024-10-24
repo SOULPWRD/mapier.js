@@ -9,6 +9,8 @@ import splite from "./splite.js";
 import parseq from "./parseq.js";
 
 function init() {
+    const root_element = document.querySelector("#root");
+    root_element.innerHTML = "Loading...";
 
     return parseq.parallel([
         splite.load()
@@ -18,6 +20,8 @@ function init() {
         if (error) {
             throw error;
         }
+        
+        root_element.innerHTML = "";
 
         const db = {
             splite
@@ -25,7 +29,7 @@ function init() {
 
         app_ui({
             db
-        }).mount("#root");
+        }).mount(root_element);
     });
 }
 

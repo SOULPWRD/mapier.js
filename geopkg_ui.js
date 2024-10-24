@@ -37,17 +37,19 @@ const geopkg_ui = make_ui("geopkg-ui", function (element, {
             table = geopkg_table_ui({
                 columns,
                 on_row_click: function (row) {
-                    const [table_name] = row;
+                    const [table_name, geometry, srs, geom_column_name] = row;
                     controls.remove_listeners();
                     controls.attach_listeners({
                         on_add: function () {
                             geopackage.get_feature(
                                 table_name
                             ).get.objs.then(function (features) {
-                                
                                 on_add_source({
+                                    features,
+                                    geometry,
                                     name: table_name,
-                                    features
+                                    srs,
+                                    geom_column_name
                                 });
                             });
                         }

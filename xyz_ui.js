@@ -20,16 +20,21 @@ const xyz_ui = make_ui("xyz-ui", function (element, {
             url: ""
         },
         {
+            center: [0, 0],
             max_zoom_level: 19,
             min_zoom_level: 0,
             name: "OpenStreetMap",
-            url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            srs: "EPSG:3857",
+            url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            zoom: 2
         },
         {
+            center: [0, 0],
             max_zoom_level: 15,
             min_zoom_level: 0,
             name: "MapZen",
-            url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+            url: "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
+            zoom: 2
         }
     ]
 }) {

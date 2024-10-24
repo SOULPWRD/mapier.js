@@ -8,6 +8,7 @@ import dom from "./dom.js";
 
 const details_xyz_ui = make_ui("details-xyz-ui", function (element, {
     add_disabled = false,
+    center = [0, 0],
     delete_disabled = false,
     max_zoom_level = 0,
     min_zoom_level = 0,
@@ -18,7 +19,9 @@ const details_xyz_ui = make_ui("details-xyz-ui", function (element, {
     on_save_source,
     on_url_change,
     save_disabled = false,
-    url = ""
+    srs = "EPSG:3857",
+    url = "",
+    zoom = 0
 }) {
     let name_input;
     let url_input;
@@ -33,6 +36,7 @@ const details_xyz_ui = make_ui("details-xyz-ui", function (element, {
 
     function get_details() {
         return Object.freeze({
+            center,
             max_zoom_level: (
                 max_zoom_input.disabled
                 ? undefined
@@ -44,15 +48,20 @@ const details_xyz_ui = make_ui("details-xyz-ui", function (element, {
                 : min_zoom_input?.value
             ),
             name: name_input?.value,
-            url: url_input?.value
+            srs,
+            url: url_input?.value,
+            zoom
         });
     }
 
-    function update_details(detail = {}) {
-        name_input.value = detail.name ?? name;
-        url_input.value = detail.url ?? url;
-        min_zoom_input.value = detail.min_zoom_level ?? min_zoom_level;
-        max_zoom_input.value = detail.max_zoom_level ?? max_zoom_level;
+    function update_details(source = {}) {
+        name_input.value = source.name ?? name;
+        url_input.value = source.url ?? url;
+        min_zoom_input.value = source.min_zoom_level ?? min_zoom_level;
+        max_zoom_input.value = source.max_zoom_level ?? max_zoom_level;
+        zoom = source.zoom ?? zoom;
+        srs = source.srs ?? srs;
+        center = source.center ?? center;
     }
 
     function clear_details() {

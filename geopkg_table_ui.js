@@ -6,6 +6,15 @@
 import make_ui from "./ui.js";
 import dom from "./dom.js";
 
+function render_css() {
+    return `
+        tr:hover {
+            cursor: pointer;
+            background-color: yellow;
+        }
+    `;
+}
+
 const geopkg_table_ui = make_ui("geopkg-table-ui", function (element, {
     columns,
     on_row_click,
@@ -15,6 +24,7 @@ const geopkg_table_ui = make_ui("geopkg-table-ui", function (element, {
     let table_rows;
     let table_columns;
 
+    const style = dom("style");
     const shadow = element.attachShadow({mode: "closed"});
 
     table = dom("table");
@@ -36,8 +46,9 @@ const geopkg_table_ui = make_ui("geopkg-table-ui", function (element, {
         }));
     });
 
+    style.textContent = render_css();
     table.append(table_columns, ...table_rows);
-    shadow.append(table);
+    shadow.append(style, table);
 });
 
 //demo import demo from "./demo.js";
