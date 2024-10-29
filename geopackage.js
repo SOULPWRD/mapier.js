@@ -3,9 +3,9 @@
 
 /*jslint browser */
 
-function geopackage({
+function geopackage(
     db
-}) {
+) {
     function get_feature_tables() {
         return db.exec(
             `
@@ -43,8 +43,34 @@ function geopackage({
         );
     }
 
+    function get_feature_as_geojson(
+        table_name,
+        geometry_columm,
+        column_names = []
+    ) {
+
+        return db.exec(
+            `
+                SELECT 
+                    json_object(
+                        'type', 'FeatureCollection', 
+                        'features', json_group_array(
+                         json_object(
+                            'type', 'Feature',
+                            'geometry', json(
+                                AsGeoJSON(${geometry_columm})
+                            )
+                        )
+                    )
+                ) AS geometry
+                FROM ${table_name};
+            `
+        );
+    }
+
     return Object.freeze({
         get_feature,
+        get_feature_as_geojson,
         get_feature_tables
     });
 }

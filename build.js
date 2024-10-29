@@ -46,7 +46,9 @@ function create_bundle(input_file, environment) {
 
 
 function write_document(output_path) {
-    return function (callback, app_code) {
+    return function (callback, {
+        app_code
+    }) {
         const document = create_html({
             app_code,
             // todo state
@@ -76,7 +78,9 @@ function log_result(ignore, reason) {
 
 function build_html(input, output, environment = "development") {
     return parseq.sequence([
-        create_bundle(input, environment),
+        parseq.parallel_object({
+            app_code: create_bundle(input, environment)
+        }),
         write_document(output)
     ])(log_result);
 }

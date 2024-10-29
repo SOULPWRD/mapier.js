@@ -11,7 +11,7 @@ import geopkg_table_ui from "./geopkg_table_ui.js";
 import geopkg_controls_ui from "./geopkg_controls_ui.js";
 
 const geopkg_ui = make_ui("geopkg-ui", function (element, {
-    db,
+    modules,
     on_add_source,
     on_close
 }) {
@@ -41,8 +41,9 @@ const geopkg_ui = make_ui("geopkg-ui", function (element, {
                     controls.remove_listeners();
                     controls.attach_listeners({
                         on_add: function () {
-                            geopackage.get_feature(
-                                table_name
+                            geopackage.get_feature_as_geojson(
+                                table_name,
+                                geom_column_name
                             ).get.objs.then(function (features) {
                                 on_add_source({
                                     features,
@@ -64,7 +65,7 @@ const geopkg_ui = make_ui("geopkg-ui", function (element, {
     }
 
     connections = geopkg_conn_ui({
-        db,
+        modules,
         on_connect,
         on_remove: function () {
             controls?.remove_listeners();

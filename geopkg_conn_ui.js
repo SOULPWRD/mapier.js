@@ -12,7 +12,7 @@ import dom from "./dom.js";
 import geopackage from "./geopackage.js";
 
 const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
-    db,
+    modules,
     db_connections = [],
     on_connect,
     on_remove
@@ -23,7 +23,7 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
     let new_connection_button;
     let remove_button;
 
-    const {splite} = db;
+    const {splite} = modules;
     const shadow = element.attachShadow({mode: "closed"});
 
     select_box = dom("select", db_connections.map(function ({name}) {
@@ -67,7 +67,8 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
                     SELECT EnableGpkgMode();
                 `).then(function (db) {
                     db_connections.push({
-                        geopackage: geopackage({db}),
+                        file,
+                        geopackage: geopackage(db),
                         name: file.name
                     });
                 });
@@ -148,8 +149,8 @@ const geopkg_conn_ui = make_ui("geopkg-conn-ui", function (element, {
 
 //demo import demo from "./demo.js";
 //demo demo(geopkg_conn_ui({
-//demo     db: {
-//demo         sql: function (value) {
+//demo     modules: {
+//demo         splite: function (value) {
 //demo             console.log(value);
 //demo         }
 //demo     },

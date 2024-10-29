@@ -15,7 +15,7 @@ import dom from "./dom.js";
 import projection from "./projection.js";
 
 const app_ui = make_ui("app-ui", function (element, {
-    db
+    modules
 }) {
     let dialog;
     let map;
@@ -40,7 +40,7 @@ const app_ui = make_ui("app-ui", function (element, {
         visibility: false
     });
     source_manager = source_manager_ui({
-        db,
+        modules,
         map: map.get_map(),
         on_add_source: function on_add_source(source) {
             layers.add_layer(source);
