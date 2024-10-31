@@ -7,6 +7,8 @@
         "email": "martin.pravda@gmail.com"
     },
     "dependencies": {
+        "gdal3.js": "^2.8.1",
+        "geojson-vt": "^4.0.2",
         "ol": "^10.2.1",
         "proj4": "^2.12.1",
         "spl.js": "^0.1.2"
