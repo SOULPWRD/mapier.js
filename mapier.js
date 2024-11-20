@@ -7,6 +7,7 @@
 import app_ui from "./app_ui.js";
 import splite from "./splite.js";
 import parseq from "./parseq.js";
+
 function init() {
     const root_element = document.querySelector("#root");
     root_element.innerHTML = "Loading...";
